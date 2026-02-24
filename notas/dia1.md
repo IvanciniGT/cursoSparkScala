@@ -95,7 +95,7 @@ En el mundo de la informática (desarrollo) hablamos de:
 - Procedural              Cuando agrupo secuencias de instrucciones en grupos que se denominan: procedimientos, funciones, métodos, subrutinas,
                           etc... (dependiendo del lenguaje de programación), que posteriormente puedo invocar (ejecutar) desde cualquier parte de mi código. 
                           Evidentemente: PY, JAVA, SCALA soportan este paradigma.
-                          Ventajas:
+                          Ventajas/Motivos por el que crear funciones/métodos/procedimientos:
                           - Mejorar la estructura del código
                           - Evitar duplicaciones = Reutilizar código
 - Funcional               Cuando el lenguaje me permite que una variable apunte a una función y posteriormente ejecutar la función desde la
@@ -107,6 +107,8 @@ En el mundo de la informática (desarrollo) hablamos de:
                           El problema es lo que puedo llegar a hacer si el lenguaje de programación soporta el paradigma funcional:
                           - Definir funciones que aceptan otras funciones como parámetros (funciones de orden superior)
                           - Definir funciones que devuelven otras funciones como resultado (closure)
+                          Al trabajar con programación funcional, hay un motivo adicional para definir funciones/métodos/procedimientos: 
+                          - Artículo 33... No me quedan más narices... si quiero llamar a una función que me pide una función como argumento.
 - Orientado a Objetos     Todo lenguaje de programación define ciertos tipos de datos. En función del tipo de dato, así las 
                           operaciones que puedo hacer:
                                           Que le caracteríza?               Qué puedo hacer?

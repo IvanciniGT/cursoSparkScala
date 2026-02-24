@@ -11,6 +11,7 @@ object BasicoScala {
     ejemploSintaxisBasica()  // Llamada a la función que muestra la sintaxis básica de scala.
     operadoresBasicos()
     tiposDatosBasicos()
+    options()
   }
 
   def tiposDatosBasicos(): Unit ={
@@ -25,8 +26,30 @@ object BasicoScala {
     // - En disco, si guado binario si habrá mucha diferencia!
     // Y más en nuestro mundo: BIGDATA
 
+    val texto:String = "hola"
+    val caracter:Char = 'A'
+  }
 
+  def options():Unit = {
+    val potencialMensaje:Option[String] = puedeDevolverAlgo("HOLA") // En este caso el texto no llega a 5 caracteres. No devolverá nada (en realidad devuelve None)
+    if(potencialMensaje.isEmpty) {
+      println("Esta vacio el primero")
+    }else{
+      println("Esta lleno el primero")
+    }
+    val potencialMensaje2:Option[String] = puedeDevolverAlgo("HOLA AMIGOS") // En este caso el texto si llega a 5 caracteres. Devolverá el mismo texto (empaquetado con lacito!)
+    if(potencialMensaje2.isEmpty) {
+      println("Esta vacio el segundo")
+    }else{
+      println("Esta lleno el segundo " + potencialMensaje2.get)
+    }
+  }
 
+  def puedeDevolverAlgo(mensaje:String): Option[String] = {
+    if (mensaje.length > 5)
+      Some(mensaje)
+    else
+      None
   }
 
 
