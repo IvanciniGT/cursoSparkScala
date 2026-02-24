@@ -19,6 +19,7 @@ object ProgramacionFuncional {
   def main(args: Array[String]):Unit = {
 
     println(saluda("Menchu"))
+
     // Una función que recibe un String y produce un String
     val miFuncion: (String => String) = saluda // Referencia la función. Sería lo mismo que saluda _
     println(miFuncion("Federico"))
