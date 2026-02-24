@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Archivo de configuración de maven para nuestro proyecto -->
+
+
+    <!-- Coordenadas del proyecto -->
+    <groupId>com.curso</groupId>
+    <artifactId>basicos-scala</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <!-- Forma en la que se empaqueta: .jar, .war, ... -->
+    <packaging>jar</packaging>
+
+    <!-- Metadatos adicionales -->
+    <name>Formación Scala</name>
+    <description>Ejemplos para aprender el lenguaje de programación Scala</description>
+
+    <!--Parametros/Constantes a nivel de nuestro proyecto -->
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <scala.version>2.13.18</scala.version>
+        <scala-maven-plugin.version>4.9.9</scala-maven-plugin.version>
+        <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
+    </properties>
+
+    <!-- Dependencias -->
+    <dependencies>
+        <!-- Source: https://mvnrepository.com/artifact/org.scala-lang/scala-compiler -->
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>${scala.version}</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+    <!-- Configuración de los Plugins que vamos a usar -->
+    <build>
+        <sourceDirectory>src/main/scala</sourceDirectory>
+        <plugins>
+            <!-- Plugin para compilar scala -->
+            <!-- Source: https://mvnrepository.com/artifact/net.alchim31.maven/scala-maven-plugin -->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>${scala-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Plugin de utilidad para facilitar la ejecución de apps desde linea de comandos -->
+            <!-- Source: https://mvnrepository.com/artifact/org.codehaus.mojo/exec-maven-plugin -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-maven-plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
