@@ -1,6 +1,6 @@
 import org.apache.spark.{SparkConf, SparkContext}
 
-import java.util.concurrent.atomic.LongAdder
+//import java.util.concurrent.atomic.LongAdder
 //import scala.collection.parallel.CollectionConverters._
 
 object ExtraerHashtagsSpark {
@@ -28,13 +28,18 @@ object ExtraerHashtagsSpark {
     )
     val tweets: List[String] = List.fill(500000)(baseTweets).flatten // Tenemos una lista con 2.000.000 tweets (500k veces la misma lista de 4 tweets)
     val palabrasProhibidas = List("caca", "culo", "pedo", "pis", "mierda")
+    // Para evitar que este listado se mande con cada paquete (ahora que tenemos muchos paquetes de datos)
+    // Hacemos un broadcast de esta variable.
+    // Es decir, la enviamos a cada nodo del cluster una sola vez, y cada nodo la guarda en memoria para usarla en cada paquete de datos que le llegue.
+    val referenciaAlListado = conexion.broadcast(palabrasProhibidas)
 
     //var numeroDeHashtagsEliminados = 0L
-    val numeroDeHashtagsEliminados: LongAdder = new LongAdder() // Para evitar la race condition. El long adder es lo que denomínamos: Thread-safe.
-    // Es decir, es una estructura de datos que se puede usar de forma concurrente sin necesidad de sincronización explícita (sin necesidad de usar locks)
-    // Me garantiza la atomicidad de las operaciones (en este caso, la operación increment() que suma 1 al contador) y la visibilidad de los cambios realizados por un hilo a otros hilos.
+    val numeroDeHashtagsEliminados = conexion.longAccumulator("Numero de hashtags eliminados") // Para tener una única variable global
 
-    val resultado: Array[String] = conexion.parallelize(tweets)
+    val paquetes_de_tamano = 1000 // tweets por paquete.
+    val numero_de_paquetes = (tweets.length / paquetes_de_tamano).toInt
+
+    val resultado: Array[String] = conexion.parallelize(tweets, numero_de_paquetes)
                                         .map(      _.replaceAll("#"," #")              ) // Separando Hashtags juntos
                                         .flatMap(  _.split("[.; ,:_\"'¿?¡!()-]+")      ) // separando términos en el tweet (palabras, hashtags)
                                         .filter(   _.startsWith("#")                   ) // Nos quedamos solo con los hashtags
@@ -42,19 +47,19 @@ object ExtraerHashtagsSpark {
                                         .map(      hashtag => hashtag.toLowerCase()    ) // Normalizamos case (minúsculas)
                                         //.filter(   hashtag => palabrasProhibidas.filter(palabraProhibida=> hashtag.contains(palabraProhibida)).length == 0 ) // Eliminamos los hashtags que contienen palabras prohibidas
                                         .filter(   hashtag => {
-                                                                val contieneProhibidas = palabrasProhibidas.exists(palabraProhibida=> hashtag.contains(palabraProhibida))
+                                                                val contieneProhibidas = referenciaAlListado.value.exists(palabraProhibida=> hashtag.contains(palabraProhibida))
                                                                 //if (contieneProhibidas) numeroDeHashtagsEliminados += 1 // Race condition: Al ser un contador compartido entre hilos, el resultado no va a ser bueno.
                                                                                                                         // La operación += 1 no es atómica. Realmente por dentro es:
                                                                                                                         // 1. Leer el valor actual de numeroDeHashtagsEliminados
                                                                                                                         // 2. Sumarle 1 al valor leído
                                                                                                                         // 3. Escribir el nuevo valor de vuelta en numeroDeHashtagsElimin
-                                                                if(contieneProhibidas) numeroDeHashtagsEliminados.increment() // Esta operación se hace de forma atómica.
+                                                                if(contieneProhibidas) numeroDeHashtagsEliminados.add(1) // Esta operación se hace de forma atómica.
                                           // Para evitarlo, tendríamos que usar un contador atómico (AtomicLong) o una estructura de datos concurrente (ConcurrentHashMap) para almacenar los resultados.
                                                                 !contieneProhibidas
                                                               }
                                         ).collect()
     //println(s"Número de hashtags eliminados: ${numeroDeHashtagsEliminados}") // Cuando usábamos el Long
-    println(s"Número de hashtags eliminados: ${numeroDeHashtagsEliminados.sum()}")
+    println(s"Número de hashtags eliminados: ${numeroDeHashtagsEliminados.value}")
 
     //for (hashtag <- resultado) {
     //    println(hashtag)
