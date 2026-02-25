@@ -11,16 +11,14 @@ object ExtraerHashtags {
 
     val palabrasProhibidas = List("caca", "culo", "pedo", "pis", "mierda")
 
-    var numeroDeHashtagsEliminados = 0L
+    //var numeroDeHashtagsEliminados = 0L
 
-    val resultado: Map[String, Int] = // TODO
+    val resultado: List[String] = // TODO
 
     println(s"Número de hashtags eliminados: $numeroDeHashtagsEliminados")
 
-    for (par <- resultado) {
-    val hashtag = par._1
-    val ocurrencias = par._2
-    println(hashtag + " -> " + ocurrencias)
+    for (hashtag <- resultado) {
+    println(hashtag )
     }  
   }
 }
