@@ -27,6 +27,7 @@
         <scala.version>2.13.18</scala.version>
         <scala-maven-plugin.version>4.9.9</scala-maven-plugin.version>
         <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
+        <scala-parallel-collections_2.13.version>1.2.0</scala-parallel-collections_2.13.version>
     </properties>
 
     <!-- Dependencias -->
@@ -38,10 +39,21 @@
             <version>${scala.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-parallel-collections_2.13</artifactId>
+            <version>${scala-parallel-collections_2.13.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
             <version>${scala.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.spark/spark-core -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.13</artifactId>
+            <version>4.1.1</version>
         </dependency>
     </dependencies>
     <!-- Configuración de los Plugins que vamos a usar -->

@@ -1,9 +1,24 @@
-import java.util.concurrent.atomic.LongAdder
-import scala.collection.parallel.CollectionConverters._
+import org.apache.spark.{SparkConf, SparkContext}
 
-object ExtraerHashtags {
+import java.util.concurrent.atomic.LongAdder
+//import scala.collection.parallel.CollectionConverters._
+
+object ExtraerHashtagsSpark {
 
   def main(args: Array[String]): Unit = {
+
+    // Al trabajar con Spark, lo que hacemos es mandar nuestro algoritmo map/reduce a un cluster de máquinas que lo ejecutarán.
+    // El cluster me mandará el resultado de vuelta.
+
+    // Paso 1. Conectarnos a un cluster de Spark
+    val configuracionConexion = new SparkConf()
+                                  .setAppName("ExtraerHashtags")  // Identificador de mi app en el cluster (mpara monitorización)
+                                  .setMaster("local[10]")          // La ruta del cluster al que me conecto
+                                                                  // Eso suele ser de la forma: "spark://ip-del-nodo-maestro:puerto"
+    // Como estamos desarrollando y no queremos ejecutar esto contra un cluster de verdad, Spark me permite levantar un cluster de pruebas en mi máquina (1 solo nodo)
+    // Esto es para ejecutar en local. Entre corchete ponemos el número de core que quiero que pueda usar el cluster local.
+    // No pongo *... me deja máquina frita.
+    val conexion = new SparkContext(configuracionConexion)
 
     val baseTweets = List(
       "En la playa con mis amig@s #veranito#GoodVibes#FriendForever#PedoPis",
@@ -19,7 +34,7 @@ object ExtraerHashtags {
     // Es decir, es una estructura de datos que se puede usar de forma concurrente sin necesidad de sincronización explícita (sin necesidad de usar locks)
     // Me garantiza la atomicidad de las operaciones (en este caso, la operación increment() que suma 1 al contador) y la visibilidad de los cambios realizados por un hilo a otros hilos.
 
-    val resultado: List[String] = tweets.par
+    val resultado: Array[String] = conexion.parallelize(tweets)
                                         .map(      _.replaceAll("#"," #")              ) // Separando Hashtags juntos
                                         .flatMap(  _.split("[.; ,:_\"'¿?¡!()-]+")      ) // separando términos en el tweet (palabras, hashtags)
                                         .filter(   _.startsWith("#")                   ) // Nos quedamos solo con los hashtags
@@ -37,7 +52,7 @@ object ExtraerHashtags {
                                           // Para evitarlo, tendríamos que usar un contador atómico (AtomicLong) o una estructura de datos concurrente (ConcurrentHashMap) para almacenar los resultados.
                                                                 !contieneProhibidas
                                                               }
-                                        ).toList // Eliminamos los hashtags que contienen palabras prohibidas
+                                        ).collect()
     //println(s"Número de hashtags eliminados: ${numeroDeHashtagsEliminados}") // Cuando usábamos el Long
     println(s"Número de hashtags eliminados: ${numeroDeHashtagsEliminados.sum()}")
 
@@ -72,6 +87,9 @@ object ExtraerHashtags {
     // Spark me lo resuelve... tiene un concepto similar al LongAdder, que se llama Accumulators.
     // Es una variable global que se puede usar para acumular valores a través de los nodos del cluster.
     // Pero esto hay que tenerlo en cuenta.
+
+    // Cerrar la conexión al cluster
+    conexion.stop()  // Como tenemos un cluster local, que se crea en automático, este método también lo cerrará el cluster. (lo apaga)
   }
 
 
