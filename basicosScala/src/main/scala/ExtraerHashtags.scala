@@ -15,10 +15,10 @@ object ExtraerHashtags {
 
     val resultado: List[String] = // TODO
 
-    println(s"Número de hashtags eliminados: $numeroDeHashtagsEliminados")
+    //println(s"Número de hashtags eliminados: $numeroDeHashtagsEliminados")
 
     for (hashtag <- resultado) {
-    println(hashtag )
+    println( hashtag )
     }  
   }
 }
