@@ -33,7 +33,6 @@ object IntroSparkSQL {
         // Una cosa es que sparksql me permita usar una sintaxis similar a SQL para escribir consultas, y otra cosa es que realmente esté ejecutando esas consultas en un motor de base de datos relacional.
         // AQUI NO HAY BBDD. Y las BBDD son seres maravillosos... extraordinarios. COMPLEJOS!
 
-        
         // Cierro conexión al cluster
         conexion.stop()
     }
