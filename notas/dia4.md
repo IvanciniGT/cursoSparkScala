@@ -478,3 +478,11 @@ Nuestros Tweets
 Apache Spark es un producto Opensource y gratuito.
 Sabeís que tiene versión de pago? DataBricks
 En databricks se trabaja con archivos DELTA, que no son en realidad sino secuencias de archivos PARQUET, pero con un formato de metadatos adicional que me permite hacer cosas chulas como versionado de datos, rollbacks, etc... pero eso ya es otra historia.
+
+---
+
+Leemos datos de personas y cps
+
+- Las personas con DNI invalido -> A un fichero
+- De las que quedan, las menores de edad -> A otro fichero
+- De las que quedan, enriquecemos con la información de cps -> A otro fichero
