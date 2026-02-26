@@ -375,3 +375,106 @@ Las BBDD resuleven joins mediante distintos algoritmos de join
 - lookup <- Es el equivalente a un bucle:
      Voy recorriendo una tabla, y por cada fila de esa tabla, hago una consulta a la otra tabla para buscar el valor que necesito... y luego lo añado a la fila que estoy recorriendo. 
         Esto es eficiente? Si quiero sacar pocos datos, y el hacer la consulta a la otra tabla es rápido, puede ser eficiente... pero si quiero sacar muchos datos, o la consulta a la otra tabla es lenta, entonces no es eficiente.
+
+---
+
+# Parquet / Avro
+
+Por qué quiero estos formatos tan raros? Con lo a gusto que estoy yo trabajando con csv! (hasta json, xml)
+
+Esos formatos : CSV, JSON, XML son formatos de texto plano.
+Da igual el dato que yo guarde... se guarda como texto! Caracteres!
+Si guardo edad: 33
+El 33 se guarda como el caracter 3 y caracter 3...
+Imaginad el dni: 23000000 -> 8 caracteres = 8 bytes, frente a 4 bytes si lo guardo en un formato binario como número.
+Al final en un fichero siempre acabo guardando bytes.
+El tema es cómo los interpreto... si los interpreto como caracteres, entonces tengo un formato de texto plano... pero si los interpreto como otras cosas, entonces tengo un formato binario.
+
+Cuál es el problema? necesito saber cómo leer esos bytes.. y en casos donde además hay datos de muchos tipos...
+Tengo que saber:
+Los primeros 5 bytes son texto, los 4 siguientes son un número, los siguientes 8 son una fecha, luego un byte por hay que es un booleano.
+Y esto en cada fila... Si tengo que currarme yo la lectura del archivo OLVIDATE!.. TXT y pa'lante (json, yaml, xml...)
+
+Estos archivos : AVRO, PARQUET lo primero que llevan es un ESQUEMA de datos (ese que sale cuando hacemos el printSchema())
+Y eso nos ayuda a entender cómo leer cada byte que hay en el archivo... 
+
+Evidentemente el tener los datos guardados en un archivo binario hará que los datos ocupen mucho menos.
+
+Eso es la diferencia entre un formato de texto plano y un formato binario:
+JSON, XML, TXT, CSV <> AVRO, PARQUET
+
+Qué diferencia encuentro en tre AVRO y PARQUET? Ambos son formatos binarios, ambos tienen un esquema de datos... pero cambia la forma en la que guardan los datos internamente.
+AVRO guarda datos orientados a filas, mientras que PARQUET guarda datos orientados a columnas.
+Qué significa eso?
+
+```json
+[
+    {
+        "nombre": "Federico",
+        "edad": 33,
+        "dni": "23000000T"
+    },
+    {
+        "nombre": "Menchu",
+        "edad": 44,
+        "dni": "23000023T"
+    }
+]
+```
+
+Eso sería si lo guardo en JSON... texto plano... En HDD guardo esa secuencia de caracteres, codificada en bytes mediante un juego de caracteres (UTF-8, ASCII, ISO-8859-1, etc...)
+
+Si lo guardo en AVRO, seria algo así como:
+
+```avro .. más o menos... llevado a binario
+Esquema:
+    nombre: String
+    edad: Int
+    dni: String
+Índice de filas:
+    Fila1: Empieza en el byte 116
+    Fila2: Empieza en el byte 156
+Datos:
+    Fila1: Federico, 33, 23000000T
+    Fila2: Menchu, 44, 23000023T
+```
+
+La pinta que tendría un parquet sería algo así como:
+
+```parquet .. más o menos... llevado a binario
+Esquema:
+    nombre: String
+    edad: Int
+    dni: String
+Índice de columnas:
+    nombre: Empieza en el byte 116
+    edad: Empieza en el byte 156
+    dni: Empieza en el byte 196
+Datos:
+    nombre: Federico, Menchu
+    edad: 33, 44
+    dni: 23000000T, 23000023T
+```
+AVRO va orientado a FILAS
+PARQUET va orientado a COLUMNAS
+
+Para procesar (transformar) datos, que me interesa más? Dependerá de la transformación
+Para análisis de datos? BI? COLUMNA <- Parquet
+
+Querré sacar un cuadro de mando contando la cantidad gente que vive en cada municipìo. Solo quiero la columna Municipio.
+
+Nuestros Tweets
+
+    App X en el teléfono
+        tweet             ------>      Servidor (KAFKA - COLA)
+            - texto                         AVRO   <---- Spark... para sacar los hashtags ---> PARQUET ---> TRENDING TOPICS (BBDD relacional)
+            - fecha                                <---- Spark... para sacar las imagenes y aplicar reconocimiento de imagenes
+            - usuario                              <---- Spark... para sacar las menciones  --> Cola ---> Notificaciones
+            - dispositivo                                                                       AVRO
+            - imagenes                              
+            - videos
+            - etc...
+  
+Apache Spark es un producto Opensource y gratuito.
+Sabeís que tiene versión de pago? DataBricks
+En databricks se trabaja con archivos DELTA, que no son en realidad sino secuencias de archivos PARQUET, pero con un formato de metadatos adicional que me permite hacer cosas chulas como versionado de datos, rollbacks, etc... pero eso ya es otra historia.
