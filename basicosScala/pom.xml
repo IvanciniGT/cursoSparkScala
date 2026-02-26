@@ -55,7 +55,12 @@
             <artifactId>spark-core_2.13</artifactId>
             <version>4.1.1</version>
         </dependency>
-    </dependencies>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.13</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+        </dependencies>
     <!-- Configuración de los Plugins que vamos a usar -->
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>

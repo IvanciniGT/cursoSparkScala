@@ -8,6 +8,7 @@ object FiltrarDNIsConSparkCore {
       .setAppName("Filtrar DNIs con Spark Core")
       .setMaster("local[*]")
 
+
     val sc = new SparkContext(conf)
 
     try {
@@ -18,7 +19,6 @@ object FiltrarDNIsConSparkCore {
 
       val dnis: Array[String] = GeneradorDNIs.generarLote(total, porcentajeValidos, seed)
 
-      val rdd = sc.parallelize(dnis)
 
       // Acumulador para contar inválidos
       val invalidosAcc = sc.longAccumulator("dnis_invalidos")
@@ -26,19 +26,18 @@ object FiltrarDNIsConSparkCore {
       // Parseo + filtro en un solo paso:
       // - Si parse es Right(dni) => lo emito
       // - Si parse es Left(err)  => incremento acumulador y no emito nada
-      val dnisValidosRDD = rdd.flatMap { texto =>
-        DNI.parse(texto) match {
-          case Right(dni) =>
-            Some(dni) // emitimos el DNI válido
+      val dnisValidos = sc.parallelize(dnis)
+                          .flatMap { texto =>
+                                      DNI.parse(texto) match {
+                                        case Right(dni) =>
+                                          Some(dni) // emitimos el DNI válido
 
-          case Left(_: DniError) =>
-            invalidosAcc.add(1)
-            None // descartamos el inválido
-        }
-      }
-
-      // Fuerza ejecución (si no hay action, el acumulador no se actualiza)
-      val dnisValidos = dnisValidosRDD.collect()
+                                        case Left(_: DniError) =>
+                                          invalidosAcc.add(1)
+                                          None // descartamos el inválido
+                                      }
+                                    }
+                          .collect()
 
       println(s"DNIs válidos: ${dnisValidos.length}")
       println(s"DNIs inválidos (acc): ${invalidosAcc.value}")
@@ -51,3 +50,6 @@ object FiltrarDNIsConSparkCore {
     }
   }
 }
+
+// En realidad, estos programas los mandamos a un cluster mediante el cliente de spark:
+// spark-submit DIRECCION ClaseQueEjecuto JARs
