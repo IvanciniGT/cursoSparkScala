@@ -94,6 +94,7 @@ object DNI {
    * Devuelve:
    * - Right(DNI(numero, letra)) si es válido
    * - Left(DniError) si es inválido (y por qué)
+   *  DNI.parse("federico") -> Exception : Lo entenderíamos como que la función no ha podido ejecutar su cometido. Su razon de ser. Ha habido un problema que ha impedido la ejecución de la función.
    */
   def parse(textoOriginal: String): Either[DniError, DNI] = {
 

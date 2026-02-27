@@ -376,6 +376,76 @@ Las BBDD resuleven joins mediante distintos algoritmos de join
      Voy recorriendo una tabla, y por cada fila de esa tabla, hago una consulta a la otra tabla para buscar el valor que necesito... y luego lo añado a la fila que estoy recorriendo. 
         Esto es eficiente? Si quiero sacar pocos datos, y el hacer la consulta a la otra tabla es rápido, puede ser eficiente... pero si quiero sacar muchos datos, o la consulta a la otra tabla es lenta, entonces no es eficiente.
 
+
+    FullScan de una tabla: O(n) - Necesito hacer tantas operaciones como datos tengo en la tabla
+    Ordenaciones son una pasada de caras... O(nlog(n)): 
+        - 1M de filas -> 1M*log(1M) de operaciones = 20M de operaciones         x20
+        - 1kM de filas -> 1kM*log(1kM) de operaciones = 30kM de operaciones     x30
+    Búsqueda con datos ordenados? Búsqueda binaria: O(log(n))
+        - 1M de filas -> log(1M) de operaciones = 20 operaciones
+        - 1kM de filas -> log(1kM) de operaciones = 30 operaciones
+
+# PARALELIZACION DE JOINS
+
+En Storm o Flink, la paralelización se consigue repartiendo tareas / trabajos
+En Spark la paralelización se consigue como? Repartiendo datos!
+Todos los nodos hacen lo mismo pero sobre subconjuntos distintos de los datos.
+
+    JOIN: Tabla 1 y Tabla 2
+    Tabla 1: 1000 filas
+    Tabla 2: 2000 filas
+
+    Para paralelizarlo en Spark, necesito hacer subconjuntos de los datos.
+
+        Tabla 1.. y le hago 10 particiones... cada partición con 100 filas y la mando a un nodo.
+        Puedo hacer lo mismo con la tabla 2? NO PUEDO
+
+            Tabla 1 de personas         Tabla 2 de provincias
+            Menchu , Valencia           Madrid
+            Federico, Madrid            Valencia
+            Felipe, Sevilla             Sevilla
+
+            La tabla 1 puedo mandar a 3 nodos una fila x nodo:
+                Nodo 1: Menchu , Valencia
+                Nodo 2: Federico, Madrid
+                Nodo 3: Felipe, Sevilla
+
+            Pero la tabla 2 la tengo que mandar entera a cada nodo... 
+            A priori no se que provincia va a aparecer en cada fila que he mandado a cada nodo.
+
+Y esa tabla puede estar sin ordenar... u ordenada... pero spark no lo sabe... por ende no puede tomar decisiones acerca de la mejor estrategia de join, como si lo haría una BBDD relacional... y entonces lo que hace es mandar toda la tabla 2 a cada nodo... y luego cada nodo hace un lookup para cada fila de la tabla 1... y eso es muy lento
+
+
+    [E]xtraccion de una BBDD
+    [T]ransformación de los datos en Spark INICIAL
+    [L]oad de los datos transformados a una BBDD relacional
+    [T]ransformación de los datos en la BBDD relacional enriqueciendo con información de otras tablas de la BBDD relacional (JOINS)
+
+        ETLT.
+
+---
+
+La tendencia hoy en día es:
+
+    JAVA/PYTHON/JS hacen un abuso de la RAM.    
+
+        Hacer un programa en C o C++ necesita 500 h de tío a 60€ la hora = 30.000€
+        Hacer un programa en Java necesita    350 h de tío a 50€ la hora = 17.500€
+                                                                          - ------
+                                                                        12.500€ de ahorro... 
+        Cuanto cuesta una pastilla de RAM en el servidor? 2.000€ (16GB)
+
+    BBDD y los clouds.
+        Antes tenía un DBA guay.. que sabía un huevo! y me tenía la BBDD finita. Iba como un tiro con recursos contenidos.
+        Hoy en día, el DBA en la calle, y la BBDD en un cloud, administrada automaticamente por un programa. Va igual que la otra? Ni de coña...
+        Como lo resolvemos (quiero el mismo rendimiento) : Más recursos: MAS RAM, MAS CPU
+            Cuánto cuestan MAS RAM + MAS CPU = 4000€/Año
+            Sueldo del DBA: 30.000€/Año
+            Ahorro: 26.000€/Año
+
+Esto aplica aquí también. Al final... muchas veces tiro por la calle de en medio...funciona? SI... pues vale... Más recursos si va lento...
+Me cuesta eso menos que horas de desarrollo haciendo que sea más eficiente!
+
 ---
 
 # Parquet / Avro
@@ -486,3 +556,86 @@ Leemos datos de personas y cps
 - Las personas con DNI invalido -> A un fichero
 - De las que quedan, las menores de edad -> A otro fichero
 - De las que quedan, enriquecemos con la información de cps -> A otro fichero
+
+---
+
+# Qué era UNIX?
+
+Unix era un SO que hacían los lab. Bell de la Americana de telco AT&T... Multics
+Dejaron de hacerlo a principios de los 2000.
+En su momento se lcienciaba de forma diferente a como se hace hoy en día con los programas: EULA (End User License Agreement)
+Se licenciaba a fabricantes de hardware y grandes empresas... que lo modificaban para sus equipos... y podían revenderlo.
+
+Problema. Llegó a haber más de 400 versiones distintas de UNIX... y loss programas que se montaban para unas no funcionaban en otras.
+
+Para evitar esto salieron 2 estándares:
+- POSIX:      /bin /etc /usr       RWXRWXRWX  cp, mv, sh 
+- SUS (Single UNIX Specification)
+
+# Qué es UNIX?
+
+Unix es un sello de conformidad con esos estándares... y solo pueden usarlo los sistemas operativos que cumplen con esos estándares... y entonces se les llama sistemas operativos UNIX.
+Grandes fabricantes de hardware crean sus propios SOs, y se certifican con esos estándares... y entonces se les llama sistemas operativos UNIX.
+
+- HP:   HP-UX (UNIX®)
+- IBM:  AIX (UNIX®)
+- Oracle: Solaris (UNIX®)
+- Apple: MacOS (UNIX®)
+
+# En paralelo
+
+Hay gente que trato de montar SO cumpliendo esos estándares pero para que fuera gratuitos... y no los certificaron (que cuesta mucha pasta)
+- 386BSD (Berkeley Software Distribution) -> CAGADA! DEMANDA AL CANTO DE AT&T.. años de litigios con el código muerto sin poder usarse.
+  No obstante ese código se usó posteriormente para crear otros SO: freeBSD, openBSD, netBSD... macOS 
+- GNU: Richard Stallman. No valieron ara montar un KERNEL
+- Linus Torvalds ... harto de la situación de no tener un buen so gratis, creo un kernel de SO, y lo llamó Linux... 
+   GNU + Linux = GNU(70%)/Linux(30%) = SO 
+   Este SO se distribuye mediante distribuciones: Rhel (fedora, oracle linux), Debian (ubuntu), SUSE, etc...
+
+Linus se inspiró en POSIX y SUS... en los origenes... hoy en día lleva un desarrollo independiente de esos estándares... pero en las bases supuestamente sigue cumpliendo con esos estándares... aunque no se certifica... y entonces no se le llama UNIX... sino GNU/Linux
+
+# HDFS 
+
+Requiere de un sistema POSIX (requiere de los comandos cp, mv...) y gestiona permisos como se declara en POSIX.
+Windows NO ES POSIX... y entonces no se puede usar nativamente HDFS en Windows... (puedo instalar ese cutre-emulador llamado Winutils... para desarrollo)
+Linux... aunque no sabemos si es posix... si cumple con el mínimo que HFDS necesita.
+MacOS es POSIX... y entonces se puede usar HDFS nativamente en MacOS... aunque no es lo más habitual.
+
+---
+
+Compilados vs interpretados
+
+scala/java son compilados o interpretados? AMBAS COSAS A LA VEZ
+
+    .java  -> compila (javac)  -> .class -> interpreta (JVM)
+    .scala -> compila (scalac) -> .class -> interpreta (JVM)
+
+python es interpretado puro
+C es compilado puro
+
+Un programa compilado es más o menos rápido que un programa interpretado? COMPILADO
+
+El SO de mi computadora entiende C? NO
+El SO de mi computadora entiende Java? NO
+El SO de mi computadora entiende Python? NO
+El SO de mi computadora entiende bytecode? NO
+
+Un SO solo entiende su propio lenguaje.
+
+Cuando creo un programa (que es un documento que escribo en un lenguaje) quien lo ejecuta es el SO... pero ese no sabe del lenguaje en el que yo he escrito el programa... 
+
+Hay que traducirselo -> compilación       C -> compilo -> código que entiende mi SO (Windows)
+                                            -> compilo -> código que entiende mi SO (Linux)
+
+O hay que interpretarlo (traduce en tiempo real)
+
+Cúando es más fluida la comunicación (traducción previa-compilación- o su hay interpretación en tiempo real)? COMPILACIÓN PREVIA
+
+Scala o JAVA compilan a bytecode... que es un lenguaje intermedio. Eso me ofrece una de las bondades de la compilación (al compilar no solo trducimos, de paso: optimizamos código, revisamos errortes de tipos de datos...), pero también, la interpretación del bytecode me da beneficios: No necesito distribuir paquetes distintos a distintos SO.
+Lo único que necesito es tener un interprete adecuado en cada sistema operativo... pero a todos les mando la misma mierda (bytecode : .jar)Pero claro... 
+
+eso se interpreta = LENTO comparado con la compilación.
+
+En JVM, desde la v.1.2 , se incluye en el JIT (JustInTime compiler de la JVM) un componente llamado HotSpot, es una caché de compilaciones
+
+Para medir rendimiento de apps JAVA (que corren sobre la JVM, aunque sean generadas con scala) necesito calentar el JIT (es decir, llenar la cache del HotSpot) para que el programa se ejecute con la máxima eficiencia posible.
